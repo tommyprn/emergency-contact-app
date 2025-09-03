@@ -1,45 +1,47 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+// App.tsx (ringkas)
+import * as React from 'react';
+import {StyleSheet} from 'react-native';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+import HomeScreen from './src/screens/home';
+import SupportAgent from './src/screens/agent-support';
+import PermissionGate from './src/screens/permission';
+import EmergencyScreen from './src/screens/emergency';
 
-function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+type Root = {
+  Home: undefined;
+  Emergency: undefined;
+  PermissionGate: undefined;
+};
 
+const Stack = createNativeStackNavigator<Root>();
+
+export default function App() {
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
-    </SafeAreaProvider>
+    <NavigationContainer>
+      <Stack.Navigator
+        initialRouteName="PermissionGate"
+        screenOptions={{
+          headerShown: false,
+          contentStyle: {backgroundColor: '#303030'},
+        }}>
+        {/* <Stack.Screen
+          name="PermissionGate"
+          component={(props: any) => (
+            <PermissionGate
+              onAllGranted={() => props.navigation.replace('Home')}
+            />
+          )}
+        />
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Emergency" component={EmergencyScreen} /> */}
+        <Stack.Screen name="Home" component={SupportAgent} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
-
-  return (
-    <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+const custom = StyleSheet.create({
+  note: {color: '#6b7280', fontSize: 12},
 });
-
-export default App;
