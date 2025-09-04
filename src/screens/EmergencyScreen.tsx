@@ -10,7 +10,7 @@ import {View, StyleSheet, Pressable, Text} from 'react-native';
 import LocationPill from '../components/LocationPill';
 import RecordingIndicator from '../components/RecordingIndicator';
 
-const RASGUARD_PHONE = '+62XXXXXXXXXXX'; // ganti dari env/config
+const RASGUARD_PHONE = '+628179196363'; // ganti dari env/config
 
 export default function EmergencyScreen() {
   const {device, cameraRef, recording, lastFile, start, stop} = useRecorder();
@@ -26,19 +26,27 @@ export default function EmergencyScreen() {
   });
 
   const onStart = useCallback(async () => {
-    setActive(true);
-    await startFg('Rasguard', 'Emergency mode aktif');
-    await start();
-    const text = `SOS: butuh bantuan. Lokasi awal: ${coord.lat ?? '-'}, ${
-      coord.lon ?? '-'
-    }`;
-    await wa.open(text);
+    try {
+      setActive(true);
+      await startFg('Rasguard', 'Emergency mode aktif');
+      await start();
+      const text = `SOS: butuh bantuan. Lokasi awal: ${coord.lat ?? '-'}, ${
+        coord.lon ?? '-'
+      }`;
+      await wa.open(text);
+    } catch (e) {
+      console.warn('Failed to start SOS:', e);
+      setActive(false);
+    }
   }, [coord, setActive, startFg, start, wa]);
 
   const onStop = useCallback(async () => {
-    await stop();
-    await stopFg();
-    setActive(false);
+    try {
+      await stop(); // stop recorder/camera
+    } finally {
+      await stopFg(); // hentikan foreground service
+      setActive(false);
+    }
   }, [stop, stopFg, setActive]);
 
   return (

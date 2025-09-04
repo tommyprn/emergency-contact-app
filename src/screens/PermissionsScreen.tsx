@@ -1,14 +1,13 @@
 // PermissionsScreen.tsx
 import React, {useState, useEffect} from 'react';
-import {View, Text, StyleSheet, Pressable} from 'react-native';
-import {usePermissions} from '../hooks/usePermissions';
+import {View, Text, Alert, StyleSheet, Pressable} from 'react-native';
+import {ensureAll, checkAll} from '../hooks/usePermissions';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {RootStackParamList} from '../app/AppNavigator';
 
 export default function PermissionsScreen({
   navigation,
 }: NativeStackScreenProps<RootStackParamList, 'Permissions'>) {
-  const {ensureAll, checkAll} = usePermissions();
   const [loading, setLoading] = useState(false);
 
   // 👇 On mount: silently check and redirect if already approved
@@ -23,7 +22,14 @@ export default function PermissionsScreen({
     setLoading(true);
     const res = await ensureAll();
     setLoading(false);
-    if (res.ok) navigation.replace('Home');
+    if (res.ok) {
+      navigation.replace('Home');
+    } else {
+      // Minimal hint — you can inspect res.details.coreResults to list exactly which one
+      Alert.alert(
+        'Izin belum lengkap. Mohon izinkan Kamera, Mikrofon, Lokasi, dan Notifikasi.',
+      );
+    }
   };
 
   return (

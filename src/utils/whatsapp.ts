@@ -1,4 +1,4 @@
-import {Linking} from 'react-native';
+import {Alert, Linking} from 'react-native';
 
 export async function openWhatsApp({
   text,
@@ -13,6 +13,8 @@ export async function openWhatsApp({
     `whatsapp://send?phone=${phoneE164}&text=${txt}`,
     `https://wa.me/${phoneE164.replace('+', '')}${txt ? `?text=${txt}` : ''}`,
   ];
+  console.log(candidates);
+
   for (const url of candidates) {
     const can = await Linking.canOpenURL(url);
     if (can) {
@@ -21,4 +23,5 @@ export async function openWhatsApp({
     }
   }
   return false;
+  // return Alert.alert('konek ke whatsapp');
 }
