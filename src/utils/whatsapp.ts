@@ -1,35 +1,24 @@
 import {Linking} from 'react-native';
 
-export type WhatsAppParams = {
+export async function openWhatsApp({
+  text,
+  phoneE164,
+}: {
+  text: string;
   phoneE164: string;
-  text?: string;
-};
-
-const enc = (s: string) => encodeURIComponent(s);
-
-export async function openWhatsApp({phoneE164, text = ''}: WhatsAppParams) {
-  const normalized = phoneE164.replace(/[^0-9+]/g, '');
-
-  const payload = `?phone=${normalized}&text=${enc(text)}`;
-
-  const businessScheme = `whatsapp-business://send${payload}`;
-  const consumerScheme = `whatsapp://send${payload}`;
-  const webLink = `https://wa.me/${normalized.replace('+', '')}${
-    text ? `?text=${enc(text)}` : ''
-  }`;
-
-  // coba WA Business dulu
-  const canOpenBusiness = await Linking.canOpenURL(businessScheme);
-  if (canOpenBusiness) {
-    return Linking.openURL(businessScheme);
+}) {
+  const txt = encodeURIComponent(text);
+  const candidates = [
+    `whatsapp-business://send?phone=${phoneE164}&text=${txt}`,
+    `whatsapp://send?phone=${phoneE164}&text=${txt}`,
+    `https://wa.me/${phoneE164.replace('+', '')}${txt ? `?text=${txt}` : ''}`,
+  ];
+  for (const url of candidates) {
+    const can = await Linking.canOpenURL(url);
+    if (can) {
+      await Linking.openURL(url);
+      return true;
+    }
   }
-
-  // lalu WA reguler
-  const canOpenConsumer = await Linking.canOpenURL(consumerScheme);
-  if (canOpenConsumer) {
-    return Linking.openURL(consumerScheme);
-  }
-
-  // terakhir: fallback ke web
-  return Linking.openURL(webLink);
+  return false;
 }
