@@ -13,10 +13,11 @@ export async function openWhatsApp({
     `whatsapp://send?phone=${phoneE164}&text=${txt}`,
     `https://wa.me/${phoneE164.replace('+', '')}${txt ? `?text=${txt}` : ''}`,
   ];
-  console.log(candidates);
 
   for (const url of candidates) {
     const can = await Linking.canOpenURL(url);
+    console.log(url, ': ', can);
+
     if (can) {
       await Linking.openURL(url);
       return true;

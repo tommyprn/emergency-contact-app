@@ -33,7 +33,11 @@ export default function EmergencyScreen() {
       const text = `SOS: butuh bantuan. Lokasi awal: ${coord.lat ?? '-'}, ${
         coord.lon ?? '-'
       }`;
-      await wa.open(text);
+      setTimeout(() => {
+        wa.open(text).catch(e => {
+          console.warn('Failed to open WhatsApp', e);
+        });
+      }, 2000); // 0.8s delay
     } catch (e) {
       console.warn('Failed to start SOS:', e);
       setActive(false);
