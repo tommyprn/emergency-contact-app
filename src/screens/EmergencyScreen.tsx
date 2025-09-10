@@ -1,17 +1,19 @@
 import React, {useCallback, useState} from 'react';
 import {Camera} from 'react-native-vision-camera';
+import {sendSOS} from '../hooks/useInfobip';
 import {useRecorder} from '../hooks/useRecorder';
 import {useSOSStore} from '../store/sosStore';
+import {requestWACall} from '../utils/sos';
 import {useWhatsAppLink} from '../hooks/useWhatsAppLink';
 import {useLocationStream} from '../hooks/useLocationStream';
 import {useForegroundService} from '../hooks/useForegroundService';
-import {View, StyleSheet, Pressable, Text} from 'react-native';
+import {View, StyleSheet, Pressable, Text, Alert} from 'react-native';
 
 import LocationPill from '../components/LocationPill';
 import RecordingIndicator from '../components/RecordingIndicator';
 
-const RASGUARD_PHONE = '+628179196363'; // ganti dari env/config
-
+const RASGUARD_PHONE = '628179196363'; // ganti dari env/config
+const USER_MSISDN = '6281931197146';
 export default function EmergencyScreen() {
   const {device, cameraRef, recording, lastFile, start, stop} = useRecorder();
   const {isActive, setActive} = useSOSStore();
@@ -33,25 +35,50 @@ export default function EmergencyScreen() {
       const text = `SOS: butuh bantuan. Lokasi awal: ${coord.lat ?? '-'}, ${
         coord.lon ?? '-'
       }`;
-      setTimeout(() => {
-        wa.open(text).catch(e => {
-          console.warn('Failed to open WhatsApp', e);
-        });
-      }, 2000); // 0.8s delay
+      const resp = await requestWACall({
+        userPhoneE164: USER_MSISDN,
+        location:
+          coord.lat && coord.lon ? {lat: coord.lat, lon: coord.lon} : undefined,
+        photoUrl: '',
+      });
+      // if (resp.status === 'permission_sent') {
+      //   Alert.alert('SOS terkirim', 'Meminta izin panggilan WhatsApp…');
+      // } else {
+      //   Alert.alert('Status', resp.status);
+      // }
     } catch (e) {
-      console.warn('Failed to start SOS:', e);
+      console.warn(e);
+      Alert.alert('Gagal SOS Terjadi kesalahan.');
+      setTimeout(async () => await stop(), 2000);
+      await stopFg();
       setActive(false);
     }
-  }, [coord, setActive, startFg, start, wa]);
+  }, [coord, setActive, startFg, start, stop, stopFg]);
 
   const onStop = useCallback(async () => {
     try {
       await stop(); // stop recorder/camera
+      setTimeout(async () => await stop(), 2000);
     } finally {
       await stopFg(); // hentikan foreground service
       setActive(false);
+      sendSOS({
+        text: 'Orang ini butuh bantuan!! Cepat bergerak selamatkan warga!',
+        lat: coord.lat,
+        lon: coord.lon,
+        photoUrl: null,
+        audioUrl: null,
+      });
     }
   }, [stop, stopFg, setActive]);
+
+  const isObjectEmpty = (obj: any) => {
+    if (typeof obj !== 'object' || obj === null) {
+      return false;
+    }
+
+    return Object.keys(obj).length === 0;
+  };
 
   return (
     <View style={s.wrap}>
@@ -80,6 +107,8 @@ export default function EmergencyScreen() {
           <Pressable style={[s.btn, s.btnDanger]} onPress={onStart}>
             <Text style={s.btnTxt}>Mulai SOS</Text>
           </Pressable>
+        ) : isObjectEmpty(coord) ? (
+          <Text style={[s.loadTxt]}>Loading...</Text>
         ) : (
           <Pressable style={[s.btn, s.btnStop]} onPress={onStop}>
             <Text style={s.btnTxt}>Stop</Text>
@@ -100,6 +129,7 @@ const s = StyleSheet.create({
   btnDanger: {backgroundColor: '#FF3B30'},
   btnStop: {backgroundColor: '#111'},
   btnTxt: {color: 'white', fontWeight: '800'},
+  loadTxt: {color: 'white'},
   topBar: {
     position: 'absolute',
     top: 14,

@@ -6,7 +6,8 @@ export default function LocationPill({lat, lon}: {lat?: number; lon?: number}) {
   return (
     <View style={styles.pill}>
       <Text style={styles.txt}>
-        {lat.toFixed(5)}, {lon.toFixed(5)}
+        {/* {lat.toFixed(5)}, {lon.toFixed(5)} */}
+        {lat && lon ? 'Location sent to rasguard' : 'Finding location...'}
       </Text>
     </View>
   );
